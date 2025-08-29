@@ -1,0 +1,179 @@
+{
+    "folders": [
+        {
+            "name": "🍞 Fermentation Monitor",
+            "path": "."
+        }
+    ],
+    "settings": {
+        // Workspace-specific settings
+        "files.exclude": {
+            "**/.git": true,
+            "**/build": true,
+            "**/build-*": true,
+            "**/__pycache__": true,
+            "**/*.pyc": true,
+            "**/venv": true,
+            "**/env": true,
+            "**/downloads": true,
+            "**/sstate-cache": true,
+            "**/poky": true,
+            "**/meta-openembedded": true,
+            "**/meta-raspberrypi": true
+        },
+        
+        // Multi-root workspace settings
+        "cmake.sourceDirectory": "${workspaceFolder}/src/cpp",
+        "cmake.buildDirectory": "${workspaceFolder}/build",
+        
+        // Terminal settings for workspace
+        "terminal.integrated.cwd": "${workspaceFolder}",
+        
+        // Task and launch configuration
+        "debug.toolBarLocation": "docked",
+        
+        // Language-specific workspace settings
+        "[bitbake]": {
+            "editor.tabSize": 4,
+            "editor.insertSpaces": true
+        },
+        
+        // Search configuration for workspace
+        "search.useGlobalIgnoreFiles": true,
+        "search.useIgnoreFiles": true,
+        
+        // Git configuration
+        "git.detectSubmodules": true,
+        "git.fetchOnPull": true,
+        
+        // Workspace-specific Python configuration
+        "python.defaultInterpreterPath": "./venv/bin/python",
+        "python.analysis.extraPaths": [
+            "./src/python"
+        ],
+        
+        // IntelliSense cache location
+        "C_Cpp.intelliSenseCacheSize": 1024,
+        "C_Cpp.workspaceParsingPriority": "medium",
+        
+        // Code formatting workspace settings
+        "editor.formatOnSave": true,
+        "editor.formatOnPaste": true,
+        
+        // Workspace layout
+        "workbench.editor.enablePreview": false,
+        "workbench.editor.enablePreviewFromQuickOpen": false,
+        
+        // Problems panel configuration
+        "problems.showCurrentInStatus": true,
+        
+        // File associations specific to this project
+        "files.associations": {
+            "*.bb": "bitbake",
+            "*.bbappend": "bitbake",
+            "*.bbclass": "bitbake",
+            "*.inc": "bitbake",
+            "**/meta-*/**/*.conf": "bitbake",
+            "Dockerfile.*": "dockerfile",
+            "*.service": "systemd"
+        }
+    },
+    
+    "tasks": {
+        "version": "2.0.0",
+        "tasks": [
+            {
+                "label": "🏗️ Quick Build",
+                "type": "shell",
+                "command": "make build",
+                "group": {
+                    "kind": "build",
+                    "isDefault": true
+                },
+                "presentation": {
+                    "echo": true,
+                    "reveal": "always",
+                    "focus": false,
+                    "panel": "shared",
+                    "showReuseMessage": false
+                },
+                "problemMatcher": ["$gcc"]
+            },
+            {
+                "label": "🧹 Clean All",
+                "type": "shell",
+                "command": "make clean",
+                "group": "build",
+                "presentation": {
+                    "echo": true,
+                    "reveal": "always",
+                    "focus": false,
+                    "panel": "shared"
+                }
+            },
+            {
+                "label": "🚀 Start Dev Server",
+                "type": "shell",
+                "command": "make dev-run",
+                "group": "test",
+                "isBackground": true,
+                "presentation": {
+                    "echo": true,
+                    "reveal": "always",
+                    "focus": true,
+                    "panel": "new"
+                }
+            }
+        ]
+    },
+    
+    "launch": {
+        "version": "0.2.0",
+        "configurations": [
+            {
+                "name": "🐍 Debug Python Main",
+                "type": "python",
+                "request": "launch",
+                "program": "${workspaceFolder}/src/python/main.py",
+                "console": "integratedTerminal",
+                "cwd": "${workspaceFolder}",
+                "env": {
+                    "PYTHONPATH": "${workspaceFolder}/src/python"
+                }
+            },
+            {
+                "name": "🔧 Debug C++ App",
+                "type": "cppdbg",
+                "request": "launch",
+                "program": "${workspaceFolder}/build/fermentation_monitor",
+                "args": [],
+                "stopAtEntry": false,
+                "cwd": "${workspaceFolder}",
+                "environment": [],
+                "externalConsole": false,
+                "MIMode": "gdb",
+                "preLaunchTask": "🏗️ Quick Build"
+            }
+        ],
+        "compounds": [
+            {
+                "name": "🎯 Debug Full Stack",
+                "configurations": [
+                    "🔧 Debug C++ App",
+                    "🐍 Debug Python Main"
+                ]
+            }
+        ]
+    },
+    
+    "extensions": {
+        "recommendations": [
+            "ms-python.python",
+            "ms-vscode.cpptools",
+            "ms-vscode.cmake-tools",
+            "eamodio.gitlens",
+            "EugenWiens.bitbake",
+            "ms-vscode-remote.remote-ssh"
+        ]
+    }
+}

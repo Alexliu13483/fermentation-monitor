@@ -1,0 +1,96 @@
+# Build directories
+build/
+dist/
+*.egg-info/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# C++
+*.o
+*.a
+*.exe
+*.dll
+*.dylib
+*.so
+
+# Yocto build directories
+build-*/
+downloads/
+sstate-cache/
+poky/
+meta-openembedded/
+meta-raspberrypi/
+
+# Data files
+*.db
+*.db-journal
+*.log
+logs/
+data/
+*.jpg
+*.png
+*.mp4
+*.avi
+
+# Configuration files with sensitive data
+config/*.key
+config/*.pem
+config/local.conf
+.env
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
+.tox/
+
+# Documentation build
+docs/_build/
+docs/build/
+
+# Temporary files
+*.tmp
+*.temp
+temp/
+tmp/
+
+# System files
+.ssh/
+*.pid
+*.sock
+
+# Backup files
+*.bak
+*.backup
+*.old
+
+# Package files
+*.tar.gz
+*.zip
+*.tar.bz2
+*.deb
+*.rpm
+
+# Image files (except logos/icons)
+images/
+captures/
+*.raw

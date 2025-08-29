@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="jumbotron bg-light p-5 rounded mb-4">
+            <h1 class="display-4">麵團發酵監控系統</h1>
+            <p class="lead">使用 Raspberry Pi 4 + OpenCV 監控麵團發酵過程</p>
+            <hr class="my-4">
+            <p>即時監控溫度、濕度和發酵活動狀態</p>
+            <a class="btn btn-primary btn-lg" href="{{ url_for('dashboard') }}" role="button">查看儀表板</a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="fas fa-thermometer-half fa-3x text-danger mb-3"></i>
+                <h5 class="card-title">溫度監控</h5>
+                <p class="card-text">即時監控環境溫度變化</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="fas fa-tint fa-3x text-info mb-3"></i>
+                <h5 class="card-title">濕度監控</h5>
+                <p class="card-text">追蹤環境濕度狀況</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="fas fa-camera fa-3x text-success mb-3"></i>
+                <h5 class="card-title">視覺分析</h5>
+                <p class="card-text">OpenCV 影像分析發酵狀態</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>即時狀態</h5>
+            </div>
+            <div class="card-body" id="current-status">
+                <p>載入中...</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>發酵階段</h5>
+            </div>
+            <div class="card-body" id="fermentation-sessions">
+                <p>載入中...</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    updateCurrentStatus();
+    updateSessions();
+    
+    // Update every 30 seconds
+    setInterval(updateCurrentStatus, 30000);
+    setInterval(updateSessions, 60000);
+});
+
+function updateCurrentStatus() {
+    fetch('/api/current-status')
+        .then(response => response.json())
+        .then(data => {
+            const statusDiv = document.getElementById('current-status');
+            statusDiv.innerHTML = `
+                <div class="row">
+                    <div class="col-6">
+                        <strong>溫度:</strong> ${data.temperature ? data.temperature.toFixed(1) + '°C' : 'N/A'}
+                    </div>
+                    <div class="col-6">
+                        <strong>濕度:</strong> ${data.humidity ? data.humidity.toFixed(1) + '%' : 'N/A'}
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-6">
+                        <strong>發酵活動:</strong> ${data.fermentation_activity.toFixed(2)}
+                    </div>
+                    <div class="col-6">
+                        <strong>氣泡數:</strong> ${data.bubble_count}
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-12">
+                        <small class="text-muted">最後更新: ${new Date(data.last_update * 1000).toLocaleString()}</small>
+                    </div>
+                </div>
+            `;
+        })
+        .catch(error => {
+            console.error('Error fetching current status:', error);
+        });
+}
+
+function updateSessions() {
+    fetch('/api/sessions')
+        .then(response => response.json())
+        .then(data => {
+            const sessionsDiv = document.getElementById('fermentation-sessions');
+            if (data.length === 0) {
+                sessionsDiv.innerHTML = '<p class="text-muted">目前沒有進行中的發酵</p>';
+            } else {
+                sessionsDiv.innerHTML = data.map(session => `
+                    <div class="mb-2">
+                        <strong>${session.name}</strong><br>
+                        <small class="text-muted">開始時間: ${new Date(session.start_time * 1000).toLocaleString()}</small>
+                    </div>
+                `).join('');
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching sessions:', error);
+        });
+}
+</script>
+{% endblock %}
