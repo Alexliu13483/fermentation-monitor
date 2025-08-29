@@ -4,40 +4,31 @@
 <div class="row">
     <div class="col-12">
         <div class="jumbotron bg-light p-5 rounded mb-4">
-            <h1 class="display-4">麵團發酵監控系統</h1>
-            <p class="lead">使用 Raspberry Pi 4 + OpenCV 監控麵團發酵過程</p>
+            <h1 class="display-4">Fermentation Monitor</h1>
+            <p class="lead">Webcam-based dough size monitoring using OpenCV</p>
             <hr class="my-4">
-            <p>即時監控溫度、濕度和發酵活動狀態</p>
-            <a class="btn btn-primary btn-lg" href="{{ url_for('dashboard') }}" role="button">查看儀表板</a>
+            <p>Real-time monitoring of dough size and fermentation progress</p>
+            <a class="btn btn-primary btn-lg" href="{{ url_for('dashboard') }}" role="button">View Dashboard</a>
         </div>
     </div>
 </div>
 
 <div class="row">
-    <div class="col-md-4 mb-4">
-        <div class="card">
-            <div class="card-body text-center">
-                <i class="fas fa-thermometer-half fa-3x text-danger mb-3"></i>
-                <h5 class="card-title">溫度監控</h5>
-                <p class="card-text">即時監控環境溫度變化</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4 mb-4">
-        <div class="card">
-            <div class="card-body text-center">
-                <i class="fas fa-tint fa-3x text-info mb-3"></i>
-                <h5 class="card-title">濕度監控</h5>
-                <p class="card-text">追蹤環境濕度狀況</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4 mb-4">
+    <div class="col-md-6 mb-4">
         <div class="card">
             <div class="card-body text-center">
                 <i class="fas fa-camera fa-3x text-success mb-3"></i>
-                <h5 class="card-title">視覺分析</h5>
-                <p class="card-text">OpenCV 影像分析發酵狀態</p>
+                <h5 class="card-title">Image Analysis</h5>
+                <p class="card-text">OpenCV-powered dough size detection and tracking</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="fas fa-chart-line fa-3x text-primary mb-3"></i>
+                <h5 class="card-title">Growth Monitoring</h5>
+                <p class="card-text">Track dough size changes over time</p>
             </div>
         </div>
     </div>
@@ -47,20 +38,20 @@
     <div class="col-md-6">
         <div class="card">
             <div class="card-header">
-                <h5>即時狀態</h5>
+                <h5>Current Status</h5>
             </div>
             <div class="card-body" id="current-status">
-                <p>載入中...</p>
+                <p>Loading...</p>
             </div>
         </div>
     </div>
     <div class="col-md-6">
         <div class="card">
             <div class="card-header">
-                <h5>發酵階段</h5>
+                <h5>Fermentation Sessions</h5>
             </div>
             <div class="card-body" id="fermentation-sessions">
-                <p>載入中...</p>
+                <p>Loading...</p>
             </div>
         </div>
     </div>
@@ -86,23 +77,23 @@ function updateCurrentStatus() {
             statusDiv.innerHTML = `
                 <div class="row">
                     <div class="col-6">
-                        <strong>溫度:</strong> ${data.temperature ? data.temperature.toFixed(1) + '°C' : 'N/A'}
+                        <strong>Dough Size:</strong> ${data.dough_size ? data.dough_size.toFixed(1) : 'N/A'}
                     </div>
                     <div class="col-6">
-                        <strong>濕度:</strong> ${data.humidity ? data.humidity.toFixed(1) + '%' : 'N/A'}
+                        <strong>Size Change:</strong> ${data.size_change_percent ? data.size_change_percent.toFixed(1) + '%' : 'N/A'}
                     </div>
                 </div>
                 <div class="row mt-2">
                     <div class="col-6">
-                        <strong>發酵活動:</strong> ${data.fermentation_activity.toFixed(2)}
+                        <strong>Camera Status:</strong> ${data.camera_status || 'N/A'}
                     </div>
                     <div class="col-6">
-                        <strong>氣泡數:</strong> ${data.bubble_count}
+                        <strong>Monitoring:</strong> ${data.monitoring_active ? 'Active' : 'Inactive'}
                     </div>
                 </div>
                 <div class="row mt-2">
                     <div class="col-12">
-                        <small class="text-muted">最後更新: ${new Date(data.last_update * 1000).toLocaleString()}</small>
+                        <small class="text-muted">Last Updated: ${new Date(data.last_update * 1000).toLocaleString()}</small>
                     </div>
                 </div>
             `;
@@ -118,12 +109,12 @@ function updateSessions() {
         .then(data => {
             const sessionsDiv = document.getElementById('fermentation-sessions');
             if (data.length === 0) {
-                sessionsDiv.innerHTML = '<p class="text-muted">目前沒有進行中的發酵</p>';
+                sessionsDiv.innerHTML = '<p class="text-muted">No active fermentation sessions</p>';
             } else {
                 sessionsDiv.innerHTML = data.map(session => `
                     <div class="mb-2">
                         <strong>${session.name}</strong><br>
-                        <small class="text-muted">開始時間: ${new Date(session.start_time * 1000).toLocaleString()}</small>
+                        <small class="text-muted">Started: ${new Date(session.start_time * 1000).toLocaleString()}</small>
                     </div>
                 `).join('');
             }

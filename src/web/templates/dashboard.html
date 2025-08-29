@@ -1,52 +1,37 @@
 {% extends "base.html" %}
 
-{% block title %}儀表板 - 麵團發酵監控系統{% endblock %}
+{% block title %}Dashboard - Fermentation Monitor{% endblock %}
 
 {% block content %}
 <div class="row mb-4">
     <div class="col-12">
-        <h2>發酵監控儀表板</h2>
+        <h2>Fermentation Monitoring Dashboard</h2>
     </div>
 </div>
 
 <div class="row mb-4">
-    <div class="col-md-3">
+    <div class="col-md-4">
         <div class="card bg-primary text-white">
             <div class="card-body">
                 <div class="d-flex justify-content-between">
                     <div>
-                        <h4 id="current-temp">--°C</h4>
-                        <p>當前溫度</p>
+                        <h4 id="current-dough-size">-- units</h4>
+                        <p>Current Dough Size</p>
                     </div>
                     <div class="align-self-center">
-                        <i class="fas fa-thermometer-half fa-2x"></i>
+                        <i class="fas fa-bread-slice fa-2x"></i>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card bg-info text-white">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h4 id="current-humidity">--%</h4>
-                        <p>當前濕度</p>
-                    </div>
-                    <div class="align-self-center">
-                        <i class="fas fa-tint fa-2x"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
+    <div class="col-md-4">
         <div class="card bg-success text-white">
             <div class="card-body">
                 <div class="d-flex justify-content-between">
                     <div>
-                        <h4 id="fermentation-activity">--</h4>
-                        <p>發酵活動</p>
+                        <h4 id="size-change">--%</h4>
+                        <p>Size Change</p>
                     </div>
                     <div class="align-self-center">
                         <i class="fas fa-chart-line fa-2x"></i>
@@ -55,16 +40,16 @@
             </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card bg-warning text-white">
+    <div class="col-md-4">
+        <div class="card bg-info text-white">
             <div class="card-body">
                 <div class="d-flex justify-content-between">
                     <div>
-                        <h4 id="bubble-count">--</h4>
-                        <p>氣泡數量</p>
+                        <h4 id="camera-status">--</h4>
+                        <p>Camera Status</p>
                     </div>
                     <div class="align-self-center">
-                        <i class="fas fa-circle fa-2x"></i>
+                        <i class="fas fa-camera fa-2x"></i>
                     </div>
                 </div>
             </div>
@@ -76,20 +61,22 @@
     <div class="col-md-8">
         <div class="card">
             <div class="card-header">
-                <h5>溫度 & 濕度趨勢 (24小時)</h5>
+                <h5>Dough Size Trends (24 Hours)</h5>
             </div>
             <div class="card-body">
-                <canvas id="sensorChart"></canvas>
+                <canvas id="sizeChart"></canvas>
             </div>
         </div>
     </div>
     <div class="col-md-4">
         <div class="card">
             <div class="card-header">
-                <h5>發酵狀態</h5>
+                <h5>Live Camera Feed</h5>
             </div>
             <div class="card-body">
-                <canvas id="fermentationChart"></canvas>
+                <div id="camera-feed" class="text-center">
+                    <p class="text-muted">Camera feed would be displayed here</p>
+                </div>
             </div>
         </div>
     </div>
@@ -99,14 +86,14 @@
     <div class="col-12">
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h5>發酵階段管理</h5>
+                <h5>Fermentation Sessions</h5>
                 <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newSessionModal">
-                    <i class="fas fa-plus"></i> 新增階段
+                    <i class="fas fa-plus"></i> New Session
                 </button>
             </div>
             <div class="card-body">
                 <div id="sessions-list">
-                    載入中...
+                    Loading...
                 </div>
             </div>
         </div>
@@ -118,24 +105,24 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">新增發酵階段</h5>
+                <h5 class="modal-title">New Fermentation Session</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <form id="sessionForm">
                     <div class="mb-3">
-                        <label for="sessionName" class="form-label">階段名稱</label>
+                        <label for="sessionName" class="form-label">Session Name</label>
                         <input type="text" class="form-control" id="sessionName" required>
                     </div>
                     <div class="mb-3">
-                        <label for="sessionNotes" class="form-label">備註</label>
+                        <label for="sessionNotes" class="form-label">Notes</label>
                         <textarea class="form-control" id="sessionNotes" rows="3"></textarea>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                <button type="button" class="btn btn-primary" onclick="createSession()">建立</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="createSession()">Create</button>
             </div>
         </div>
     </div>

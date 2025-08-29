@@ -12,19 +12,19 @@ This project provides a complete dough fermentation monitoring solution, includi
 - **Data Storage**: SQLite database for historical data
 - **Cross-platform**: Works on development machines and can be deployed to embedded systems
 
-## 系統架構
+## System Architecture
 
 ```
 fermentation-monitor/
 ├── meta-fermentation-monitor/    # Yocto meta-layer
 ├── src/
-│   ├── cpp/                     # C++ 影像處理核心
-│   ├── python/                  # Python 應用程式
-│   └── web/                     # Web 介面
-├── scripts/                     # 建置和部署腳本
-├── config/                      # 配置檔案
-├── docs/                        # 文件
-└── tests/                       # 測試程式
+│   ├── cpp/                     # C++ image processing core
+│   ├── python/                  # Python applications
+│   └── web/                     # Web interface
+├── scripts/                     # Build and deployment scripts
+├── config/                      # Configuration files
+├── docs/                        # Documentation
+└── tests/                       # Test programs
 ```
 
 ## Hardware Requirements

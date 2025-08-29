@@ -390,69 +390,65 @@ cd src/python
 python main.py
 ```
 
-## 效能調整
+## Performance Optimization
 
-### 系統最佳化
+### System Optimization (Raspberry Pi)
 
 ```bash
-# GPU 記憶體分割
+# GPU memory allocation
 echo 'gpu_mem=128' | sudo tee -a /boot/config.txt
 
-# CPU 頻率設定
+# CPU frequency setting
 echo 'arm_freq=1800' | sudo tee -a /boot/config.txt
 
-# 啟用 64-bit 核心
+# Enable 64-bit kernel
 echo 'arm_64bit=1' | sudo tee -a /boot/config.txt
 ```
 
-### 應用程式調整
+### Application Configuration
 
-編輯 `/opt/fermentation-monitor/config/app.conf`:
+Edit configuration in your application code:
 
-```ini
-[performance]
-# 影像處理執行緒數
-image_processing_threads = 2
-
-# 感測器讀取間隔 (秒)
-sensor_read_interval = 30
-
-# 影像分析間隔 (秒)
-image_analysis_interval = 300
-
-[camera]
-# 降低解析度以提升效能
-width = 1280
-height = 720
-fps = 15
+```python
+# In src/python/image_processing/fermentation_analyzer.py
+class FermentationAnalyzer:
+    def __init__(self):
+        # Adjust camera resolution for performance
+        self.camera = cv2.VideoCapture(0)
+        self.camera.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+        self.camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+        self.camera.set(cv2.CAP_PROP_FPS, 15)
+        
+        # Analysis interval (seconds)
+        self.analysis_interval = 300  # 5 minutes
 ```
 
-## 備份和恢復
+## Legacy System Sections (For Reference)
 
-### 系統備份
+### System Backup (Raspberry Pi)
 
 ```bash
-# 建立系統備份
+# Create system backup
 sudo dd if=/dev/mmcblk0 of=/path/to/backup.img bs=1M status=progress
 
-# 壓縮備份
+# Compress backup
 gzip /path/to/backup.img
 ```
 
-### 資料備份
+### Data Backup
 
 ```bash
-# 備份資料庫
-sqlite3 /opt/fermentation-monitor/data/fermentation.db .dump > backup.sql
+# Backup database
+sqlite3 fermentation.db .dump > backup.sql
 
-# 備份設定檔
-tar -czf config_backup.tar.gz /opt/fermentation-monitor/config/
+# Backup configuration
+tar -czf config_backup.tar.gz config/
 ```
 
-### 恢復系統
+### System Recovery
 
 ```bash
-# 從備份恢復
+# Restore from backup
 sudo dd if=/path/to/backup.img.gz bs=1M status=progress | gunzip > /dev/mmcblk0
 ```
 
@@ -516,68 +512,68 @@ sudo dd if=/path/to/backup.img.gz bs=1M status=progress | gunzip > /dev/mmcblk0
    python3 -c "import cv2; cap=cv2.VideoCapture(0); print(f'FPS: {cap.get(cv2.CAP_PROP_FPS)}, Resolution: {cap.get(cv2.CAP_PROP_FRAME_WIDTH)}x{cap.get(cv2.CAP_PROP_FRAME_HEIGHT)}')"
    ```
 
-### 日誌分析
+### Log Analysis
 
 ```bash
-# 應用程式日誌
-tail -f /opt/fermentation-monitor/logs/app.log
+# Application logs (if using file logging)
+tail -f app.log
 
-# 系統日誌
+# System logs (Linux)
 sudo journalctl -f
 
-# 核心訊息
+# Kernel messages
 dmesg | tail -20
 ```
 
-### 效能監控
+### Performance Monitoring
 
 ```bash
-# CPU 使用率
+# CPU usage
 top
 
-# 記憶體使用
+# Memory usage
 free -h
 
-# 磁碟使用
+# Disk usage
 df -h
 
-# 溫度監控
+# Temperature monitoring (Raspberry Pi)
 vcgencmd measure_temp
 ```
 
-## 安全性設定
+## Security Configuration
 
-### SSH 安全
+### SSH Security (Linux/Raspberry Pi)
 
 ```bash
-# 變更預設密碼
+# Change default password
 passwd
 
-# 停用密碼登入 (使用 SSH 金鑰)
+# Disable password login (use SSH keys)
 sudo nano /etc/ssh/sshd_config
-# PasswordAuthentication no
+# Set: PasswordAuthentication no
 
-# 重啟 SSH 服務
+# Restart SSH service
 sudo systemctl restart ssh
 ```
 
-### 防火牆設定
+### Firewall Configuration
 
 ```bash
-# 安裝 UFW
+# Install UFW (Ubuntu/Debian)
 sudo apt install ufw
 
-# 基本規則
+# Basic rules
 sudo ufw default deny incoming
 sudo ufw default allow outgoing
 
-# 允許 SSH
+# Allow SSH
 sudo ufw allow ssh
 
-# 允許 Web 介面
+# Allow web interface
 sudo ufw allow 5000
 
-# 啟用防火牆
+# Enable firewall
 sudo ufw enable
 ```
 
