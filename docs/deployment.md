@@ -1,242 +1,393 @@
-# 部署指南
+# Deployment Guide
 
-本文件詳細說明如何部署麵團發酵監控系統到 Raspberry Pi 4 環境。
+This document details how to deploy the Fermentation Monitor system focused on dough size monitoring using webcam-based image analysis.
 
-## 部署選項
+## Deployment Options
 
-### 1. 開發部署 (Development Deployment)
-適用於本機開發和測試
+### 1. Development Deployment
+For local development and testing on any machine with a camera
 
-### 2. 生產部署 (Production Deployment)
-使用現有 Raspberry Pi OS 系統
+### 2. Production Deployment
+Deploy to a dedicated system (Raspberry Pi, server, etc.)
 
-### 3. Yocto 映像部署 (Yocto Image Deployment)
-建構完整的自訂 Linux 映像
+### 3. Cross-Platform Deployment
+Compatible with Windows, macOS, and Linux systems
 
-## 準備工作
+## Prerequisites
 
-### 硬體準備
+### Hardware Requirements
 
-1. **Raspberry Pi 4** (4GB RAM 推薦)
-2. **microSD 卡** (32GB 以上，Class 10)
-3. **Raspberry Pi Camera Module V2** 或 USB 攝影機
-4. **溫度感測器** DS18B20
-5. **濕度感測器** DHT22
-6. **跳線和麵包板**
+**Minimum Requirements:**
+1. **Computer** with camera (built-in or USB)
+2. **USB Webcam** (if no built-in camera)
+3. **Network connection** (for web interface access)
 
-### 軟體準備
+**For Raspberry Pi Deployment:**
+1. **Raspberry Pi 4** (2GB RAM minimum, 4GB recommended)
+2. **microSD card** (16GB or larger, Class 10)
+3. **USB webcam** or Raspberry Pi Camera Module
+4. **Power supply** (5V/3A USB-C)
 
-1. **開發電腦** (Ubuntu 18.04+ 或類似)
-2. **Git** 版本控制
-3. **SSH 客戶端**
-4. **SD 卡讀卡機**
+### Software Requirements
 
-## 選項 1: 開發部署
+1. **Python 3.8+**
+2. **Git** version control
+3. **Virtual environment** support
+4. **Camera drivers** (usually included with OS)
 
-### 1.1 環境設定
+## Option 1: Development Deployment
+
+### 1.1 Environment Setup
 
 ```bash
-# 複製專案
-git clone <repository-url> fermentation-monitor
+# Clone the project
+git clone https://github.com/Alexliu13483/fermentation-monitor.git
 cd fermentation-monitor
 
-# 設定開發環境
-make dev-setup
+# Create virtual environment
+python -m venv .venv
+
+# Activate virtual environment
+# On Linux/macOS:
+source .venv/bin/activate
+# On Windows:
+# .venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
 ```
 
-### 1.2 本機執行
+### 1.2 Local Execution
 
 ```bash
-# 建置 C++ 元件
-make build
+# Navigate to source directory
+cd src/python
 
-# 啟動開發伺服器
-make dev-run
+# Run the application
+python main.py
 ```
 
-### 1.3 存取介面
+### 1.3 Access Interface
 
-開啟瀏覽器至 `http://localhost:5000`
+Open browser to `http://localhost:5000`
 
-## 選項 2: 生產部署
+### 1.4 Camera Setup
 
-### 2.1 準備 Raspberry Pi
+The system will automatically detect the default camera (usually index 0). If you have multiple cameras, you may need to modify the camera index in the code.
+
+## Option 2: Raspberry Pi Deployment
+
+### 2.1 Prepare Raspberry Pi
 
 ```bash
-# 更新系統
+# Update system
 sudo apt update && sudo apt upgrade -y
 
-# 安裝系統依賴
-sudo apt install -y python3 python3-pip cmake build-essential \
-    libopencv-dev python3-opencv git
+# Install system dependencies
+sudo apt install -y python3 python3-pip python3-venv git \
+    python3-opencv libopencv-dev
 
-# 啟用攝影機
+# Enable camera (if using Raspberry Pi Camera Module)
 sudo raspi-config
-# 選擇 Interface Options > Camera > Enable
+# Select Interface Options > Camera > Enable
 
-# 啟用 1-Wire (溫度感測器)
-echo 'dtoverlay=w1-gpio' | sudo tee -a /boot/config.txt
-echo 'dtoverlay=w1-therm' | sudo tee -a /boot/config.txt
-
-# 重啟系統
+# Reboot system
 sudo reboot
 ```
 
-### 2.2 部署應用程式
+### 2.2 Deploy Application
 
-在開發電腦上執行：
+SSH into the Raspberry Pi and run:
 
 ```bash
-# 使用部署腳本
-make deploy TARGET_HOST=192.168.1.100
+# Clone the project
+git clone https://github.com/Alexliu13483/fermentation-monitor.git
+cd fermentation-monitor
 
-# 或手動部署
-./scripts/deploy.sh -h 192.168.1.100 -u pi
+# Create virtual environment
+python3 -m venv .venv
+source .venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
 ```
 
-### 2.3 驗證部署
+### 2.3 Create System Service
 
 ```bash
-# SSH 連線到 Raspberry Pi
-ssh pi@192.168.1.100
+# Create service file
+sudo nano /etc/systemd/system/fermentation-monitor.service
+```
 
-# 檢查服務狀態
+Add the following content:
+
+```ini
+[Unit]
+Description=Fermentation Monitor Service
+After=network.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi/fermentation-monitor/src/python
+Environment=PATH=/home/pi/fermentation-monitor/.venv/bin
+ExecStart=/home/pi/fermentation-monitor/.venv/bin/python main.py
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Enable and start the service:
+
+```bash
+# Enable service
+sudo systemctl enable fermentation-monitor.service
+
+# Start service
+sudo systemctl start fermentation-monitor.service
+
+# Check status
 sudo systemctl status fermentation-monitor.service
-
-# 查看日誌
-sudo journalctl -u fermentation-monitor.service -f
 ```
 
-### 2.4 存取介面
+### 2.4 Access Interface
 
-開啟瀏覽器至 `http://192.168.1.100:5000`
+Open browser to `http://[raspberry-pi-ip]:5000`
 
-## 選項 3: Yocto 映像部署
+## Option 3: Cross-Platform Deployment
 
-### 3.1 建置環境準備
+### 3.1 Windows Deployment
+
+**Prerequisites:**
+- Windows 10/11
+- Python 3.8+ from python.org
+- USB camera or built-in webcam
+
+```powershell
+# Clone the project
+git clone https://github.com/Alexliu13483/fermentation-monitor.git
+cd fermentation-monitor
+
+# Create virtual environment
+python -m venv .venv
+.venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Run the application
+cd src\python
+python main.py
+```
+
+### 3.2 macOS Deployment
+
+**Prerequisites:**
+- macOS 10.15+
+- Python 3.8+ (via Homebrew recommended)
+- Built-in camera or USB camera
 
 ```bash
-# 安裝 Yocto 依賴套件
-sudo apt install -y gawk wget git diffstat unzip texinfo gcc-multilib \
-    build-essential chrpath socat cpio python3 python3-pip python3-pexpect \
-    xz-utils debianutils iputils-ping python3-git python3-jinja2 libegl1-mesa \
-    libsdl1.2-dev pylint3 xterm python3-subunit mesa-common-dev zstd liblz4-tool
+# Install Python (if needed)
+brew install python
+
+# Clone the project
+git clone https://github.com/Alexliu13483/fermentation-monitor.git
+cd fermentation-monitor
+
+# Create virtual environment
+python3 -m venv .venv
+source .venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Run the application
+cd src/python
+python main.py
 ```
 
-### 3.2 建置 Yocto 映像
+### 3.3 Linux Deployment
+
+**Prerequisites:**
+- Ubuntu 18.04+, Debian 10+, or equivalent
+- Python 3.8+
+- USB camera or built-in webcam
 
 ```bash
-# 建置完整系統映像
-make yocto-build
+# Install system dependencies
+sudo apt update
+sudo apt install -y python3 python3-pip python3-venv git python3-opencv
+
+# Clone the project
+git clone https://github.com/Alexliu13483/fermentation-monitor.git
+cd fermentation-monitor
+
+# Create virtual environment
+python3 -m venv .venv
+source .venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Run the application
+cd src/python
+python main.py
 ```
 
-建置過程需要 2-8 小時，取決於硬體效能。
+## Camera Setup
 
-### 3.3 燒錄 SD 卡
+### USB Camera
+
+1. **Connect USB camera** to any available USB port
+2. **Verify detection**:
+   ```bash
+   # Linux:
+   ls /dev/video*
+   
+   # Windows:
+   # Check Device Manager under "Cameras" or "Imaging devices"
+   
+   # macOS:
+   # System Preferences > Security & Privacy > Camera
+   ```
+3. **Test camera** (optional):
+   ```bash
+   # Linux with OpenCV:
+   python3 -c "import cv2; cap = cv2.VideoCapture(0); print('Camera works!' if cap.isOpened() else 'Camera failed')"
+   ```
+
+### Raspberry Pi Camera Module
+
+1. **Connect camera module** to CSI port
+2. **Enable camera interface**:
+   ```bash
+   sudo raspi-config
+   # Interface Options > Camera > Enable
+   sudo reboot
+   ```
+3. **Test camera**:
+   ```bash
+   libcamera-hello --timeout 2000
+   ```
+
+### Camera Configuration
+
+The system automatically detects available cameras. To use a specific camera:
+
+1. **Find camera index**:
+   ```python
+   import cv2
+   for i in range(5):
+       cap = cv2.VideoCapture(i)
+       if cap.isOpened():
+           print(f"Camera {i} available")
+           cap.release()
+   ```
+
+2. **Modify camera index** in `src/python/image_processing/fermentation_analyzer.py`:
+   ```python
+   self.camera = cv2.VideoCapture(1)  # Change 0 to desired index
+   ```
+
+## Network Configuration
+
+### WiFi Setup (Raspberry Pi OS)
 
 ```bash
-# 燒錄映像到 SD 卡 (請小心選擇正確的裝置)
-make sdcard SD_DEVICE=/dev/sdX
-```
-
-**警告**: 這會完全覆寫 SD 卡上的所有資料。
-
-### 3.4 首次啟動
-
-1. 插入 SD 卡到 Raspberry Pi
-2. 連接攝影機和感測器
-3. 接上電源開機
-4. 系統會自動啟動服務
-
-## 硬體連線
-
-### 溫度感測器 (DS18B20)
-
-```
-DS18B20    Raspberry Pi 4
-VDD    →   3.3V (Pin 1)
-GND    →   GND (Pin 6)
-DQ     →   GPIO 4 (Pin 7)
-```
-
-需要 4.7kΩ 上拉電阻在 DQ 和 VDD 之間。
-
-### 濕度感測器 (DHT22)
-
-```
-DHT22      Raspberry Pi 4
-VCC    →   5V (Pin 2)
-GND    →   GND (Pin 6)
-DATA   →   GPIO 18 (Pin 12)
-```
-
-### 攝影機模組
-
-連接到 Camera Serial Interface (CSI) 連接器。
-
-## 網路設定
-
-### WiFi 設定 (Raspberry Pi OS)
-
-```bash
-# 編輯 WiFi 設定
+# Edit WiFi configuration
 sudo nano /etc/wpa_supplicant/wpa_supplicant.conf
 
-# 新增網路設定
+# Add network configuration
 network={
     ssid="YourWiFiName"
     psk="YourWiFiPassword"
 }
 
-# 重啟網路服務
+# Restart networking service
 sudo systemctl restart dhcpcd
 ```
 
-### 靜態 IP 設定
+### Static IP Setup
 
 ```bash
-# 編輯 dhcpcd.conf
+# Edit dhcpcd.conf
 sudo nano /etc/dhcpcd.conf
 
-# 新增靜態 IP 設定
+# Add static IP configuration
 interface wlan0
 static ip_address=192.168.1.100/24
 static routers=192.168.1.1
 static domain_name_servers=8.8.8.8 8.8.4.4
 ```
 
-## 服務管理
-
-### 啟動/停止服務
+### Firewall Configuration
 
 ```bash
-# 啟動服務
+# Install UFW (Ubuntu/Debian)
+sudo apt install ufw
+
+# Configure basic rules
+sudo ufw default deny incoming
+sudo ufw default allow outgoing
+
+# Allow SSH
+sudo ufw allow ssh
+
+# Allow web interface
+sudo ufw allow 5000
+
+# Enable firewall
+sudo ufw enable
+```
+
+## Service Management (Linux/Raspberry Pi)
+
+### Start/Stop Service
+
+```bash
+# Start service
 sudo systemctl start fermentation-monitor.service
 
-# 停止服務
+# Stop service
 sudo systemctl stop fermentation-monitor.service
 
-# 重啟服務
+# Restart service
 sudo systemctl restart fermentation-monitor.service
 
-# 啟用開機自動啟動
+# Enable auto-start on boot
 sudo systemctl enable fermentation-monitor.service
 
-# 停用開機自動啟動
+# Disable auto-start on boot
 sudo systemctl disable fermentation-monitor.service
 ```
 
-### 查看服務狀態
+### Check Service Status
 
 ```bash
-# 服務狀態
+# Service status
 sudo systemctl status fermentation-monitor.service
 
-# 即時日誌
+# Real-time logs
 sudo journalctl -u fermentation-monitor.service -f
 
-# 歷史日誌
+# Historical logs
 sudo journalctl -u fermentation-monitor.service --since "1 hour ago"
+```
+
+### Manual Execution (All Platforms)
+
+```bash
+# Activate virtual environment
+source .venv/bin/activate  # Linux/macOS
+# .venv\Scripts\activate     # Windows
+
+# Navigate to source directory
+cd src/python
+
+# Run application manually
+python main.py
 ```
 
 ## 效能調整
@@ -305,44 +456,64 @@ tar -czf config_backup.tar.gz /opt/fermentation-monitor/config/
 sudo dd if=/path/to/backup.img.gz bs=1M status=progress | gunzip > /dev/mmcblk0
 ```
 
-## 疑難排解
+## Troubleshooting
 
-### 常見問題
+### Common Issues
 
-1. **服務無法啟動**
+1. **Service Won't Start**
    ```bash
-   # 檢查日誌
+   # Check logs
    sudo journalctl -u fermentation-monitor.service
    
-   # 檢查權限
-   ls -la /opt/fermentation-monitor/
+   # Check permissions
+   ls -la /home/pi/fermentation-monitor/
+   
+   # Check Python path
+   which python3
    ```
 
-2. **攝影機無法存取**
+2. **Camera Access Failed**
    ```bash
-   # 檢查攝影機裝置
+   # Check camera devices
    ls /dev/video*
    
-   # 測試攝影機
-   raspistill -o test.jpg
-   ```
-
-3. **感測器讀取失敗**
-   ```bash
-   # 檢查 1-Wire 裝置
-   ls /sys/bus/w1/devices/
+   # Test camera (Linux)
+   python3 -c "import cv2; print('OK' if cv2.VideoCapture(0).isOpened() else 'FAIL')"
    
-   # 檢查 GPIO 權限
+   # Check camera permissions
    groups $USER
    ```
 
-4. **網路連線問題**
+3. **Python Dependencies Issues**
    ```bash
-   # 檢查網路狀態
+   # Reinstall dependencies
+   pip install --upgrade --force-reinstall -r requirements.txt
+   
+   # Check OpenCV installation
+   python3 -c "import cv2; print(cv2.__version__)"
+   ```
+
+4. **Network Connection Issues**
+   ```bash
+   # Check network status
    ip addr show
    
-   # 測試連線
+   # Test connectivity
    ping google.com
+   
+   # Check if port 5000 is accessible
+   netstat -tlnp | grep 5000
+   ```
+
+5. **Performance Issues**
+   ```bash
+   # Check system resources
+   top
+   free -h
+   df -h
+   
+   # Monitor camera performance
+   python3 -c "import cv2; cap=cv2.VideoCapture(0); print(f'FPS: {cap.get(cv2.CAP_PROP_FPS)}, Resolution: {cap.get(cv2.CAP_PROP_FRAME_WIDTH)}x{cap.get(cv2.CAP_PROP_FRAME_HEIGHT)}')"
    ```
 
 ### 日誌分析
@@ -410,46 +581,86 @@ sudo ufw allow 5000
 sudo ufw enable
 ```
 
-## 維護計劃
+## Maintenance
 
-### 定期維護
+### Regular Maintenance Tasks
 
-1. **每週**:
-   - 檢查服務狀態
-   - 查看系統日誌
-   - 清理暫存檔案
+1. **Weekly**:
+   - Check service status
+   - Review system logs
+   - Clean temporary files
+   - Monitor disk space
 
-2. **每月**:
-   - 系統更新
-   - 資料庫備份
-   - 效能監控
+2. **Monthly**:
+   - System updates
+   - Database backup
+   - Performance monitoring
+   - Security updates
 
-3. **每季**:
-   - 完整系統備份
-   - 硬體清潔
-   - 安全性檢查
+3. **Quarterly**:
+   - Full system backup
+   - Hardware cleaning (for Raspberry Pi)
+   - Security review
+   - Documentation updates
 
-### 自動化維護腳本
+### Automated Maintenance Script
 
 ```bash
 #!/bin/bash
-# /opt/fermentation-monitor/scripts/maintenance.sh
+# maintenance.sh
 
-# 清理日誌
-sudo journalctl --vacuum-time=30d
+# Clean system logs (Linux)
+if command -v journalctl &> /dev/null; then
+    sudo journalctl --vacuum-time=30d
+fi
 
-# 清理暫存檔案
-find /tmp -name "*.tmp" -mtime +7 -delete
+# Clean temporary files
+find /tmp -name "*.tmp" -mtime +7 -delete 2>/dev/null
 
-# 資料庫最佳化
-sqlite3 /opt/fermentation-monitor/data/fermentation.db "VACUUM;"
+# Database optimization (if SQLite database exists)
+if [ -f "fermentation.db" ]; then
+    sqlite3 fermentation.db "VACUUM;"
+fi
 
-# 檢查磁碟空間
+# Check disk space
 df -h | awk '$5 > 80 {print "Warning: " $1 " is " $5 " full"}'
+
+# Update Python packages
+source .venv/bin/activate 2>/dev/null || source .venv/Scripts/activate 2>/dev/null
+pip list --outdated
 ```
 
-設定 cron job:
+### Backup and Recovery
+
 ```bash
-# 每週執行維護
-echo "0 2 * * 0 /opt/fermentation-monitor/scripts/maintenance.sh" | crontab -
+# Backup database
+cp fermentation.db fermentation_backup_$(date +%Y%m%d).db
+
+# Backup configuration
+tar -czf config_backup_$(date +%Y%m%d).tar.gz config/
+
+# Full project backup
+tar -czf fermentation_monitor_backup_$(date +%Y%m%d).tar.gz \
+    --exclude='.venv' \
+    --exclude='__pycache__' \
+    --exclude='*.pyc' \
+    .
+```
+
+### Performance Monitoring
+
+```bash
+# Monitor system resources
+echo "=== System Resources ==="
+echo "CPU Usage: $(top -bn1 | grep 'Cpu(s)' | awk '{print $2}' | cut -d'%' -f1)"
+echo "Memory: $(free -h | awk 'NR==2{printf "%.1f%%", $3*100/$2 }')"
+echo "Disk: $(df -h / | awk 'NR==2{print $5}')"
+
+# Check camera status
+echo "=== Camera Status ==="
+python3 -c "import cv2; cap=cv2.VideoCapture(0); print('Camera: OK' if cap.isOpened() else 'Camera: FAIL'); cap.release()"
+
+# Check web service
+echo "=== Web Service ==="
+curl -s -o /dev/null -w "%{http_code}" http://localhost:5000 || echo "Service not responding"
 ```

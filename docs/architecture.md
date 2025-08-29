@@ -1,10 +1,10 @@
-# 系統架構文件
+# System Architecture Documentation
 
-## 概覽
+## Overview
 
-麵團發酵監控系統採用分層架構設計，結合了 C++ 的效能優勢和 Python 的開發便利性，提供完整的嵌入式監控解決方案。
+The Fermentation Monitor system uses a layered architecture design focused on dough size monitoring using webcam-based image analysis, providing a complete monitoring solution with Python and OpenCV.
 
-## 整體架構
+## System Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -19,10 +19,10 @@
                       │
 ┌─────────────────────▼───────────────────────────────────────┐
 │                 Application Core                            │
-│    ┌──────────────────┬────────────────────────────────────┐│
-│    │   Sensor Manager │    Image Processing Engine        ││
-│    │    (Python)      │       (C++ & Python)             ││
-│    └──────────────────┴────────────────────────────────────┘│
+│         ┌───────────────────────────────────────────────┐   │
+│         │          Image Processing Engine             │   │
+│         │           (Python & OpenCV)                  │   │
+│         └───────────────────────────────────────────────┘   │
 └─────────────────────┬───────────────────────────────────────┘
                       │
 ┌─────────────────────▼───────────────────────────────────────┐
@@ -32,271 +32,298 @@
                       │
 ┌─────────────────────▼───────────────────────────────────────┐
 │                 Hardware Layer                              │
-│    ┌──────────────┬──────────────┬─────────────────────────┐│
-│    │   Sensors    │   Camera     │      GPIO/I2C          ││
-│    └──────────────┴──────────────┴─────────────────────────┘│
+│                 ┌─────────────────┐                         │
+│                 │     Camera      │                         │
+│                 │  (USB/Built-in) │                         │
+│                 └─────────────────┘                         │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-## 核心元件
+## Core Components
 
-### 1. Web 介面層 (Presentation Layer)
+### 1. Web Interface Layer (Presentation Layer)
 
-**技術棧**: HTML5, CSS3, JavaScript, Bootstrap, Chart.js
+**Technology Stack**: HTML5, CSS3, JavaScript, Bootstrap, Chart.js
 
-**職責**:
-- 提供使用者介面
-- 資料視覺化
-- 即時狀態顯示
-- 系統控制介面
+**Responsibilities**:
+- Provide user interface
+- Data visualization
+- Real-time status display
+- System control interface
 
-**檔案結構**:
+**File Structure**:
 ```
 src/web/
 ├── templates/
-│   ├── base.html           # 基本範本
-│   ├── index.html          # 首頁
-│   └── dashboard.html      # 儀表板
+│   ├── base.html           # Base template
+│   ├── index.html          # Home page
+│   └── dashboard.html      # Dashboard
 ├── static/
 │   ├── css/
-│   │   └── style.css       # 自訂樣式
+│   │   └── style.css       # Custom styles
 │   └── js/
-│       └── dashboard.js    # 前端邏輯
+│       └── dashboard.js    # Frontend logic
 ```
 
-### 2. API 層 (API Layer)
+### 2. API Layer
 
-**技術棧**: Flask, Python 3.8+
+**Technology Stack**: Flask, Python 3.8+
 
-**職責**:
-- RESTful API 提供
-- 資料序列化/反序列化
-- 用戶會話管理
-- 錯誤處理
+**Responsibilities**:
+- RESTful API provision
+- Data serialization/deserialization
+- Session management
+- Error handling
 
-**主要端點**:
-- `/api/current-status` - 即時狀態
-- `/api/sensor-data` - 感測器資料
-- `/api/image-metrics` - 影像分析結果
-- `/api/sessions` - 發酵階段管理
+**Main Endpoints**:
+- `/api/current-status` - Real-time status
+- `/api/image-metrics` - Image analysis results
+- `/api/sessions` - Fermentation session management
+- `/api/system/info` - System information
 
-### 3. 應用程式核心層 (Application Core)
+### 3. Application Core Layer
 
-#### 3.1 感測器管理 (Sensor Manager)
+#### 3.1 Image Processing Engine
 
-**技術棧**: Python 3.8+, RPi.GPIO, 1-Wire, I2C
+**Technology Stack**: Python 3.8+, OpenCV 4.x, NumPy
 
-**功能**:
-- 溫度感測器讀取 (DS18B20)
-- 濕度感測器讀取 (DHT22)
-- 感測器狀態監控
-- 資料驗證和過濾
+**Functions**:
+- Dough size measurement
+- Size change detection
+- Contour analysis
+- Confidence scoring
+- Real-time webcam processing
 
-**類別設計**:
+**Class Design**:
 ```python
-class TemperatureSensor:
-    def read() -> float
-    def is_available() -> bool
-
-class HumiditySensor:
-    def read() -> float
-    def is_available() -> bool
+class FermentationAnalyzer:
+    def __init__(self):
+        self.camera = cv2.VideoCapture(0)
+        
+    def analyze(self) -> dict:
+        """Analyze current dough size from webcam"""
+        pass
+        
+    def calculate_size(self, frame) -> float:
+        """Calculate dough size from image frame"""
+        pass
+        
+    def detect_contours(self, frame) -> list:
+        """Detect dough contours in frame"""
+        pass
 ```
 
-#### 3.2 影像處理引擎 (Image Processing Engine)
+**Core Algorithms**:
+- Dough contour detection using edge detection
+- Size calculation based on contour area
+- Change tracking over time
+- Confidence assessment
 
-**C++ 核心 (高效能)**:
-- OpenCV 4.x
-- 即時影像擷取
-- 核心演算法實作
+### 4. Data Access Layer
 
-**Python 包裝器**:
-- 演算法協調
-- 資料轉換
-- 錯誤處理
+**Technology Stack**: SQLite 3, Python sqlite3
 
-**主要功能**:
-- 麵團體積變化檢測
-- 表面活動分析
-- 氣泡計數
-- 紋理變化分析
-
-### 4. 資料存取層 (Data Access Layer)
-
-**技術棧**: SQLite 3, Python sqlite3
-
-**資料結構**:
+**Database Schema**:
 ```sql
--- 感測器資料
-sensor_data (id, timestamp, temperature, humidity)
+-- Image analysis results
+image_metrics (
+    id, 
+    timestamp, 
+    dough_size, 
+    size_change, 
+    contour_area, 
+    detection_confidence,
+    image_path
+)
 
--- 影像分析結果
-image_metrics (id, timestamp, volume_change, surface_activity, 
-               bubble_count, texture_variance)
+-- Fermentation sessions
+fermentation_sessions (
+    id, 
+    name, 
+    start_time, 
+    end_time, 
+    status, 
+    notes
+)
 
--- 發酵階段
-fermentation_sessions (id, name, start_time, end_time, status, notes)
+-- System configuration
+system_config (
+    key, 
+    value, 
+    updated_at
+)
 ```
 
-### 5. 硬體抽象層 (Hardware Abstraction Layer)
+### 5. Hardware Abstraction Layer
 
-**感測器介面**:
-- 1-Wire 介面 (溫度感測器)
-- I2C 介面 (濕度感測器)
-- GPIO 控制
-
-**攝影機介面**:
-- V4L2 (Video4Linux2)
+**Camera Interface**:
 - OpenCV VideoCapture API
+- Cross-platform camera support (Windows, Linux, macOS)
+- USB camera and built-in camera support
+- Configurable resolution and frame rate
 
-## 通訊協定
+**Hardware Requirements**:
+- Any USB webcam or built-in camera
+- Minimum 640x480 resolution recommended
+- USB 2.0 or higher for stable video stream
 
-### 1. 內部通訊
+## Communication Protocols
 
-**Python ↔ C++**:
-- 共享記憶體
-- Named Pipes
-- 檔案 I/O
+### 1. Internal Communication
 
-**執行緒間通訊**:
-- Python threading
-- Queue 物件
-- Event 同步
+**Thread Communication**:
+- Python threading module
+- Queue objects for thread-safe data exchange
+- Event synchronization for coordinated operations
 
-### 2. 外部通訊
+**Process Communication**:
+- Shared memory for image data
+- File-based configuration sharing
+- Database-mediated data exchange
+
+### 2. External Communication
 
 **Web API**:
-- HTTP/1.1
-- JSON 資料格式
-- RESTful 設計原則
+- HTTP/1.1 protocol
+- JSON data format
+- RESTful design principles
+- WebSocket for real-time updates
 
-**硬體通訊**:
-- I2C 協定 (濕度感測器)
-- 1-Wire 協定 (溫度感測器)
-- SPI 協定 (可擴展)
+**Hardware Communication**:
+- USB protocol for camera communication
+- Standard video capture interfaces (V4L2 on Linux, DirectShow on Windows)
 
-## 資料流
+## Data Flow
 
-### 1. 感測器資料流
-
-```
-感測器 → GPIO/I2C → Python Sensor Classes → Database → Web API → Frontend
-```
-
-### 2. 影像資料流
+### 1. Image Analysis Data Flow
 
 ```
-Camera → V4L2 → OpenCV → C++ Processing → Python Interface → Database → Web API → Frontend
+Camera → OpenCV Capture → Image Processing → Size Analysis → Database → Web API → Frontend
 ```
 
-### 3. 控制流
+### 2. Control Flow
 
 ```
-Frontend → Web API → Python Core → Hardware Control
+Frontend → Web API → Python Core → Image Analysis Control
 ```
 
-## 效能考量
+### 3. Real-time Updates
 
-### 1. C++/Python 混合架構
+```
+Image Analysis → WebSocket → Frontend Dashboard (Live Updates)
+```
 
-**C++ 處理**:
-- 密集運算 (影像處理)
-- 即時要求高的任務
-- 記憶體效率要求
+## Performance Considerations
 
-**Python 處理**:
-- 業務邏輯
-- API 服務
-- 系統協調
+### 1. Python-Based Architecture
 
-### 2. 記憶體管理
+**Python Processing**:
+- Business logic and API services
+- System coordination
+- Database operations
+- Web interface serving
 
-- OpenCV Mat 物件重用
-- Python 垃圾回收優化
-- 資料庫連接池
+**OpenCV Optimization**:
+- Efficient image processing with NumPy arrays
+- Optimized computer vision algorithms
+- Memory-efficient operations
 
-### 3. 並行處理
+### 2. Memory Management
 
-- 多執行緒設計
-- 非阻塞 I/O
-- 任務佇列機制
+- OpenCV frame object reuse
+- Python garbage collection optimization
+- Database connection pooling
+- Efficient image buffer handling
 
-## 安全性設計
+### 3. Concurrent Processing
 
-### 1. 資料保護
+- Multi-threaded design
+- Non-blocking I/O operations
+- Background image analysis
+- Asynchronous web requests
 
-- SQLite 資料庫檔案權限控制
-- 敏感資料加密存儲
-- 網路傳輸 HTTPS (可選)
+## Security Design
 
-### 2. 系統安全
+### 1. Data Protection
 
-- 最小權限原則
-- 輸入驗證
-- 錯誤資訊過濾
+- SQLite database file permission control
+- Secure data storage practices
+- Optional HTTPS for network transmission
+- Input validation and sanitization
 
-### 3. 硬體安全
+### 2. System Security
 
-- GPIO 權限管理
-- 裝置存取控制
-- 系統資源保護
+- Principle of least privilege
+- Input validation for all API endpoints
+- Error message filtering to prevent information disclosure
+- Rate limiting to prevent abuse
 
-## 擴展性設計
+### 3. Camera Security
 
-### 1. 模組化架構
+- Camera access permission management
+- Secure image storage and cleanup
+- Privacy considerations for image data
 
-- 插件式感測器支援
-- 可擴展的處理演算法
-- 配置驅動的系統行為
+## Extensibility Design
 
-### 2. API 版本控制
+### 1. Modular Architecture
 
-- RESTful API 版本策略
-- 向後相容性支援
-- 功能漸進式部署
+- Plugin-style image analysis algorithms
+- Configurable system behavior
+- Modular component design for easy extension
 
-### 3. 硬體抽象
+### 2. API Versioning
 
-- 通用感測器介面
-- 攝影機抽象層
-- 平台無關設計
+- RESTful API versioning strategy
+- Backward compatibility support
+- Progressive feature deployment
 
-## 部署架構
+### 3. Hardware Abstraction
 
-### 1. 開發環境
+- Universal camera interface
+- Platform-independent design
+- Support for multiple camera types and resolutions
 
-- 本機 Ubuntu/Debian
-- Docker 容器 (可選)
-- 虛擬環境隔離
+## Deployment Architecture
 
-### 2. 目標環境
+### 1. Development Environment
 
-- Raspberry Pi 4
-- 自訂 Yocto Linux
-- Systemd 服務管理
+- Local development on Windows, macOS, or Linux
+- Python virtual environment isolation
+- Cross-platform compatibility
 
-### 3. 建置流程
+### 2. Production Environment
 
-- CMake 建置系統
-- Yocto meta-layer
-- 自動化部署腳本
+- Any system with Python 3.8+ and camera support
+- Raspberry Pi 4 for embedded deployment
+- Docker containerization support (optional)
+- Systemd service management for Linux
 
-## 監控和維護
+### 3. Build Process
 
-### 1. 日誌系統
+- Python package management with pip
+- Virtual environment for dependency isolation
+- Simple deployment scripts
 
-- Systemd journald 整合
-- 分級日誌記錄
-- 日誌輪轉管理
+## Monitoring and Maintenance
 
-### 2. 健康檢查
+### 1. Logging System
 
-- 硬體狀態監控
-- 服務可用性檢查
-- 自動故障恢復
+- Python logging module integration
+- Structured logging with different levels
+- Log rotation and management
+- Console and file output options
 
-### 3. 效能監控
+### 2. Health Checks
 
-- 系統資源使用率
-- API 回應時間
-- 資料庫效能指標
+- Camera status monitoring
+- Service availability checks
+- Automatic error recovery
+- System resource monitoring
+
+### 3. Performance Monitoring
+
+- System resource utilization
+- API response times
+- Database performance metrics
+- Image processing performance tracking
